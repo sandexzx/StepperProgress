@@ -90,24 +90,13 @@ fun WorkoutScreen(
             }
         }
 
-        Spacer(modifier = Modifier.weight(1f))
-
         // Buttons Section
         Column(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 16.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            Button(
-                onClick = { viewModel.recordStep() },
-                modifier = Modifier.fillMaxWidth(),
-                enabled = !workoutSession.isPaused,
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.primary
-                )
-            ) {
-                Text("Шаг")
-            }
-
             Button(
                 onClick = { viewModel.togglePause() },
                 modifier = Modifier.fillMaxWidth(),
@@ -129,6 +118,22 @@ fun WorkoutScreen(
                 )
             ) {
                 Text("Завершить")
+            }
+
+            Button(
+                onClick = { viewModel.recordStep() },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(72.dp),
+                enabled = !workoutSession.isPaused,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.primary
+                )
+            ) {
+                Text(
+                    "Шаг",
+                    style = MaterialTheme.typography.titleLarge
+                )
             }
         }
     }
