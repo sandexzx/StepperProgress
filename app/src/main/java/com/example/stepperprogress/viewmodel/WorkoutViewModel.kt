@@ -114,9 +114,14 @@ class WorkoutViewModel(application: Application) : AndroidViewModel(application)
                 Log.d(TAG, "Recording step in calibration mode")
                 session.copy(steps = session.steps + 1)
             } else {
-                val caloriesPerStep = _calibrationData.value.caloriesPerStep
+                val baseCaloriesPerStep = _calibrationData.value.caloriesPerStep
+                val caloriesPerStep = if (session.isMovingUp) {
+                    baseCaloriesPerStep
+                } else {
+                    baseCaloriesPerStep * 0.35 // 35% от базового значения при движении вниз
+                }
                 val newCalories = session.currentCalories + caloriesPerStep
-                Log.d(TAG, "Recording step in workout mode: calories=$newCalories")
+                Log.d(TAG, "Recording step in workout mode: calories=$newCalories, direction=${if (session.isMovingUp) "up" else "down"}")
                 session.copy(
                     steps = session.steps + 1,
                     currentCalories = newCalories
@@ -129,6 +134,12 @@ class WorkoutViewModel(application: Application) : AndroidViewModel(application)
         val newPausedState = !_workoutSession.value.isPaused
         Log.d(TAG, "Toggling pause state to: $newPausedState")
         _workoutSession.update { it.copy(isPaused = newPausedState) }
+    }
+
+    fun toggleDirection() {
+        val newDirection = !_workoutSession.value.isMovingUp
+        Log.d(TAG, "Toggling direction to: ${if (newDirection) "up" else "down"}")
+        _workoutSession.update { it.copy(isMovingUp = newDirection) }
     }
 
     fun endWorkout() {

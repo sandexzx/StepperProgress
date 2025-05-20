@@ -67,6 +67,13 @@ fun WorkoutScreen(
             modifier = Modifier.padding(bottom = 16.dp)
         )
 
+        // Direction indicator
+        Text(
+            text = if (workoutSession.isMovingUp) "Движение вверх" else "Движение вниз",
+            style = MaterialTheme.typography.titleMedium,
+            modifier = Modifier.padding(bottom = 8.dp)
+        )
+
         // Stats Section
         Card(
             modifier = Modifier
@@ -83,6 +90,14 @@ fun WorkoutScreen(
                     "${formatCalories(workoutSession.currentCalories)}/${formatCalories(workoutSession.targetCalories)}"
                 )
                 StatRow("Шагов", workoutSession.steps.toString())
+                StatRow(
+                    "Калорий на шаг",
+                    String.format("%.2f", if (workoutSession.isMovingUp) 
+                        calibrationData.caloriesPerStep 
+                    else 
+                        calibrationData.caloriesPerStep * 0.35
+                    )
+                )
                 StatRow("Время тренировки", formatDuration(viewModel.getWorkoutDuration()))
                 if (!workoutSession.isGoalAchieved) {
                     StatRow("Осталось времени", formatDuration(viewModel.getEstimatedTimeToGoal()))
@@ -108,6 +123,16 @@ fun WorkoutScreen(
                 )
             ) {
                 Text(if (workoutSession.isPaused) "Продолжить" else "Пауза")
+            }
+
+            Button(
+                onClick = { viewModel.toggleDirection() },
+                modifier = Modifier.fillMaxWidth(),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.tertiary
+                )
+            ) {
+                Text(if (workoutSession.isMovingUp) "Переключить на спуск" else "Переключить на подъем")
             }
 
             Button(

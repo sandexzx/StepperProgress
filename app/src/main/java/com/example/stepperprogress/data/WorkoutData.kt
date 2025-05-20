@@ -15,7 +15,8 @@ data class WorkoutSession(
     val steps: Int = 0,
     val startTime: Long = 0,
     val isPaused: Boolean = false,
-    val isCalibrationMode: Boolean = false
+    val isCalibrationMode: Boolean = false,
+    val isMovingUp: Boolean = true
 ) {
     val progressPercentage: Double
         get() = if (targetCalories > 0) {
