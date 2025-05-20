@@ -80,10 +80,7 @@ fun WorkoutScreen(
             ) {
                 StatRow(
                     "Сожжено калорий", 
-                    "%.1f/%.1f".format(workoutSession.currentCalories, workoutSession.targetCalories)
-                        .split("/")
-                        .map { it.trimEnd('0').trimEnd('.') }
-                        .joinToString("/")
+                    "${formatCalories(workoutSession.currentCalories)}/${formatCalories(workoutSession.targetCalories)}"
                 )
                 StatRow("Шагов", workoutSession.steps.toString())
                 StatRow("Время тренировки", formatDuration(viewModel.getWorkoutDuration()))
@@ -211,5 +208,13 @@ private fun formatDuration(duration: Duration): String {
     return when {
         hours > 0 -> String.format("%d:%02d:%02d", hours, minutes, seconds)
         else -> String.format("%02d:%02d", minutes, seconds)
+    }
+}
+
+private fun formatCalories(calories: Double): String {
+    return if (calories == calories.toInt().toDouble()) {
+        calories.toInt().toString()
+    } else {
+        String.format(java.util.Locale.US, "%.1f", calories).trimEnd('0').trimEnd('.')
     }
 } 
