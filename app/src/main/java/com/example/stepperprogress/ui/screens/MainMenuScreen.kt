@@ -44,6 +44,15 @@ fun MainMenuScreen(
         }
 
         Button(
+            onClick = { onNavigationEvent(NavigationEvent.NavigateToSettings) },
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 8.dp)
+        ) {
+            Text("Настройки")
+        }
+
+        Button(
             onClick = { onNavigationEvent(NavigationEvent.Exit) },
             modifier = Modifier
                 .fillMaxWidth()
