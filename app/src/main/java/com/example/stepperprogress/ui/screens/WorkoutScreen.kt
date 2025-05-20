@@ -68,6 +68,12 @@ fun WorkoutScreen(
             modifier = Modifier.padding(bottom = 8.dp)
         )
 
+        Text(
+            text = "${formatCalories(workoutSession.currentCalories)} ккал",
+            style = MaterialTheme.typography.headlineMedium,
+            modifier = Modifier.padding(bottom = 16.dp)
+        )
+
         // Stats Section
         Card(
             modifier = Modifier
