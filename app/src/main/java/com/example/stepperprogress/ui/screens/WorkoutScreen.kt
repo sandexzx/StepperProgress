@@ -48,11 +48,17 @@ fun WorkoutScreen(
         )
 
         // Progress Section
+        Text(
+            text = "${workoutSession.progressPercentage.toInt()}%",
+            style = MaterialTheme.typography.displayLarge,
+            modifier = Modifier.padding(bottom = 16.dp)
+        )
+
         WorkoutProgressBar(
             progress = (workoutSession.progressPercentage / 100f).toFloat(),
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(vertical = 16.dp)
+                .padding(bottom = 16.dp)
         )
 
         Text(

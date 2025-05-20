@@ -54,18 +54,5 @@ fun WorkoutProgressBar(
                     shape = RoundedCornerShape(12.dp)
                 )
         )
-
-        // Progress text
-        Box(
-            modifier = Modifier.fillMaxSize(),
-            contentAlignment = Alignment.Center
-        ) {
-            val percentage = (animatedProgress * 100).roundToInt()
-            androidx.compose.material3.Text(
-                text = "$percentage%",
-                color = Color.White,
-                style = MaterialTheme.typography.labelLarge
-            )
-        }
     }
 } 
