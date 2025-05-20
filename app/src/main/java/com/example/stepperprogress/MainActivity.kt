@@ -13,7 +13,9 @@ import com.example.stepperprogress.ui.screens.WorkoutScreen
 import com.example.stepperprogress.viewmodel.WorkoutViewModel
 
 class MainActivity : ComponentActivity() {
-    private val viewModel: WorkoutViewModel by viewModels()
+    private val viewModel: WorkoutViewModel by viewModels { 
+        WorkoutViewModel.ViewModelFactory(application) 
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

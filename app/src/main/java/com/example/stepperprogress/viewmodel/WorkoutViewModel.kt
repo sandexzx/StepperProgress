@@ -1,8 +1,11 @@
 package com.example.stepperprogress.viewmodel
 
-import androidx.lifecycle.ViewModel
+import android.app.Application
+import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.example.stepperprogress.data.CalibrationData
+import com.example.stepperprogress.data.CalibrationDataStore
 import com.example.stepperprogress.data.WorkoutSession
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -10,8 +13,10 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import java.time.Duration
 
-class WorkoutViewModel : ViewModel() {
-    private val _calibrationData = MutableStateFlow(CalibrationData())
+class WorkoutViewModel(application: Application) : AndroidViewModel(application) {
+    private val calibrationDataStore = CalibrationDataStore(application)
+    
+    private val _calibrationData = MutableStateFlow(calibrationDataStore.loadCalibrationData())
     val calibrationData: StateFlow<CalibrationData> = _calibrationData.asStateFlow()
 
     private val _workoutSession = MutableStateFlow(WorkoutSession())
@@ -31,14 +36,15 @@ class WorkoutViewModel : ViewModel() {
         val steps = session.steps
         val duration = Duration.ofMillis(System.currentTimeMillis() - session.startTime)
         
-        _calibrationData.update {
-            it.copy(
-                steps = steps,
-                calories = totalCalories,
-                caloriesPerStep = totalCalories.toDouble() / steps,
-                timePerStep = duration.dividedBy(steps.toLong())
-            )
-        }
+        val newCalibrationData = CalibrationData(
+            steps = steps,
+            calories = totalCalories,
+            caloriesPerStep = totalCalories.toDouble() / steps,
+            timePerStep = duration.dividedBy(steps.toLong())
+        )
+        
+        _calibrationData.update { newCalibrationData }
+        calibrationDataStore.saveCalibrationData(newCalibrationData)
         resetWorkoutSession()
     }
 
@@ -98,5 +104,15 @@ class WorkoutViewModel : ViewModel() {
     private fun resetWorkoutSession() {
         _workoutSession.value = WorkoutSession()
         accumulatedFractionalCalories = 0.0
+    }
+
+    class ViewModelFactory(private val application: Application) : ViewModelProvider.Factory {
+        @Suppress("UNCHECKED_CAST")
+        override fun <T : androidx.lifecycle.ViewModel> create(modelClass: Class<T>): T {
+            if (modelClass.isAssignableFrom(WorkoutViewModel::class.java)) {
+                return WorkoutViewModel(application) as T
+            }
+            throw IllegalArgumentException("Unknown ViewModel class")
+        }
     }
 } 
