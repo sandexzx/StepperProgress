@@ -7,6 +7,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.example.stepperprogress.ui.components.WorkoutProgressBar
 import com.example.stepperprogress.ui.navigation.NavigationEvent
 import com.example.stepperprogress.viewmodel.WorkoutViewModel
 import java.time.Duration
@@ -47,25 +48,11 @@ fun WorkoutScreen(
         )
 
         // Progress Section
-        LinearProgressIndicator(
+        WorkoutProgressBar(
             progress = (workoutSession.progressPercentage / 100f).toFloat(),
             modifier = Modifier
                 .fillMaxWidth()
-                .height(8.dp)
                 .padding(vertical = 16.dp)
-        )
-
-        Text(
-            text = if (Math.abs(workoutSession.progressPercentage - Math.round(workoutSession.progressPercentage)) < 0.0001) {
-                "%.0f%%".format(workoutSession.progressPercentage)
-            } else {
-                "%.3f%%".format(workoutSession.progressPercentage)
-                    .trimEnd('0')
-                    .trimEnd('.')
-                    .let { if (it.endsWith("%")) it else "$it%" }
-            },
-            style = MaterialTheme.typography.headlineMedium,
-            modifier = Modifier.padding(bottom = 8.dp)
         )
 
         Text(
@@ -78,7 +65,8 @@ fun WorkoutScreen(
         Card(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(vertical = 16.dp)
+                .padding(vertical = 16.dp),
+            elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
         ) {
             Column(
                 modifier = Modifier.padding(16.dp),
@@ -96,44 +84,46 @@ fun WorkoutScreen(
             }
         }
 
-        // Step Button
-        Button(
-            onClick = { viewModel.recordStep() },
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 8.dp),
-            enabled = !workoutSession.isPaused
-        ) {
-            Text("Шаг")
-        }
+        Spacer(modifier = Modifier.weight(1f))
 
-        // Pause/Resume Button
-        Button(
-            onClick = { viewModel.togglePause() },
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 8.dp),
-            colors = ButtonDefaults.buttonColors(
-                containerColor = if (workoutSession.isPaused) 
-                    MaterialTheme.colorScheme.primary 
-                else 
-                    MaterialTheme.colorScheme.secondary
-            )
+        // Buttons Section
+        Column(
+            modifier = Modifier.fillMaxWidth(),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            Text(if (workoutSession.isPaused) "Продолжить" else "Пауза")
-        }
+            Button(
+                onClick = { viewModel.recordStep() },
+                modifier = Modifier.fillMaxWidth(),
+                enabled = !workoutSession.isPaused,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.primary
+                )
+            ) {
+                Text("Шаг")
+            }
 
-        // Exit Button
-        Button(
-            onClick = { onNavigationEvent(NavigationEvent.NavigateToMainMenu) },
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 8.dp),
-            colors = ButtonDefaults.buttonColors(
-                containerColor = MaterialTheme.colorScheme.error
-            )
-        ) {
-            Text("Завершить")
+            Button(
+                onClick = { viewModel.togglePause() },
+                modifier = Modifier.fillMaxWidth(),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = if (workoutSession.isPaused) 
+                        MaterialTheme.colorScheme.primary 
+                    else 
+                        MaterialTheme.colorScheme.secondary
+                )
+            ) {
+                Text(if (workoutSession.isPaused) "Продолжить" else "Пауза")
+            }
+
+            Button(
+                onClick = { onNavigationEvent(NavigationEvent.NavigateToMainMenu) },
+                modifier = Modifier.fillMaxWidth(),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.error
+                )
+            ) {
+                Text("Завершить")
+            }
         }
     }
 
