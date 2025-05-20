@@ -13,6 +13,9 @@ import java.time.Duration
 import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeFormatterBuilder
 import java.time.temporal.ChronoUnit
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.windowInsetsPadding
 
 @Composable
 fun WorkoutScreen(
@@ -32,6 +35,7 @@ fun WorkoutScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
+            .windowInsetsPadding(WindowInsets.statusBars)
             .padding(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
