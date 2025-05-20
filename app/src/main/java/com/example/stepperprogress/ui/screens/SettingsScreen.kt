@@ -8,6 +8,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.example.stepperprogress.ui.navigation.NavigationEvent
 import com.example.stepperprogress.viewmodel.SettingsViewModel
+import androidx.compose.animation.*
+import androidx.compose.animation.core.*
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.text.input.KeyboardType
 
 @Composable
 fun SettingsScreen(
@@ -16,9 +20,18 @@ fun SettingsScreen(
 ) {
     val caloriesPerSteps by viewModel.caloriesPerSteps.collectAsState()
     val stepsPerCalorie by viewModel.stepsPerCalorie.collectAsState()
+    val saveSuccess by viewModel.saveSuccess.collectAsState()
     
     var caloriesPerStepsText by remember { mutableStateOf(caloriesPerSteps.toString()) }
     var stepsPerCalorieText by remember { mutableStateOf(stepsPerCalorie.toString()) }
+
+    // Обновляем текстовые поля при изменении значений из ViewModel
+    LaunchedEffect(caloriesPerSteps) {
+        caloriesPerStepsText = caloriesPerSteps.toString()
+    }
+    LaunchedEffect(stepsPerCalorie) {
+        stepsPerCalorieText = stepsPerCalorie.toString()
+    }
 
     Column(
         modifier = Modifier
@@ -35,36 +48,67 @@ fun SettingsScreen(
 
         OutlinedTextField(
             value = caloriesPerStepsText,
-            onValueChange = { caloriesPerStepsText = it },
+            onValueChange = { 
+                caloriesPerStepsText = it
+                it.toFloatOrNull()?.let { value ->
+                    viewModel.updateCaloriesPerSteps(value)
+                }
+            },
             label = { Text("Калории на шаг") },
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
         )
 
         OutlinedTextField(
             value = stepsPerCalorieText,
-            onValueChange = { stepsPerCalorieText = it },
-            label = { Text("Шагов на калорию") },
-            modifier = Modifier.fillMaxWidth()
-        )
-
-        Button(
-            onClick = {
-                caloriesPerStepsText.toFloatOrNull()?.let { calories ->
-                    stepsPerCalorieText.toFloatOrNull()?.let { steps ->
-                        viewModel.updateCaloriesPerSteps(calories, steps)
-                    }
+            onValueChange = { 
+                stepsPerCalorieText = it
+                it.toFloatOrNull()?.let { value ->
+                    viewModel.updateStepsPerCalorie(value)
                 }
             },
-            modifier = Modifier.fillMaxWidth()
+            label = { Text("Шагов на калорию") },
+            modifier = Modifier.fillMaxWidth(),
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
+        )
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            Text("Сохранить")
+            Button(
+                onClick = { viewModel.saveSettings() },
+                modifier = Modifier.weight(1f)
+            ) {
+                Text("Сохранить")
+            }
+
+            Button(
+                onClick = { onNavigationEvent(NavigationEvent.NavigateToMainMenu) },
+                modifier = Modifier.weight(1f)
+            ) {
+                Text("Назад")
+            }
         }
 
-        Button(
-            onClick = { onNavigationEvent(NavigationEvent.NavigateToMainMenu) },
-            modifier = Modifier.fillMaxWidth()
+        // Success indicator
+        AnimatedVisibility(
+            visible = saveSuccess,
+            enter = fadeIn() + expandVertically(),
+            exit = fadeOut() + shrinkVertically()
         ) {
-            Text("Назад")
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.primaryContainer
+                )
+            ) {
+                Text(
+                    text = "Настройки успешно сохранены",
+                    modifier = Modifier.padding(16.dp),
+                    color = MaterialTheme.colorScheme.onPrimaryContainer
+                )
+            }
         }
     }
 } 
