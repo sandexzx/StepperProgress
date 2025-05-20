@@ -65,6 +65,7 @@ class MainActivity : ComponentActivity() {
         override fun onServiceConnected(name: ComponentName?, service: IBinder?) {
             Log.d(TAG, "Service connected")
             stepCounterService = (service as? StepCounterService.LocalBinder)?.getService()
+            workoutViewModel.setStepCounterService(stepCounterService)
             isServiceBound = true
             collectStepUpdates()
         }
@@ -72,6 +73,7 @@ class MainActivity : ComponentActivity() {
         override fun onServiceDisconnected(name: ComponentName?) {
             Log.d(TAG, "Service disconnected")
             stepCounterService = null
+            workoutViewModel.setStepCounterService(null)
             isServiceBound = false
         }
     }
@@ -133,7 +135,10 @@ fun AppContent(
 
     fun handleNavigation(event: NavigationEvent) {
         when (event) {
-            is NavigationEvent.NavigateToMainMenu -> currentScreen = Screen.MainMenu
+            is NavigationEvent.NavigateToMainMenu -> {
+                workoutViewModel.endWorkout()
+                currentScreen = Screen.MainMenu
+            }
             is NavigationEvent.NavigateToCalibration -> {
                 workoutViewModel.startCalibration()
                 currentScreen = Screen.Calibration

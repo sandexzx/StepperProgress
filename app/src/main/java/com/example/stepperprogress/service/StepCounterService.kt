@@ -11,20 +11,20 @@ import android.os.IBinder
 import android.util.Log
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 
 class StepCounterService : Service(), SensorEventListener {
     private val TAG = "StepCounterService"
     private val binder = LocalBinder()
     private lateinit var sensorManager: SensorManager
     private var stepSensor: Sensor? = null
-    private var initialSteps = -1
-    private var currentSteps = 0
+    private var initialSteps: Int = -1
+    private var currentSteps: Int = 0
 
-    private val _stepFlow = MutableSharedFlow<Int>(
-        replay = 1,
-        extraBufferCapacity = 1
-    )
-    val stepFlow: SharedFlow<Int> = _stepFlow
+    private val _stepFlow = MutableStateFlow(0)
+    val stepFlow: StateFlow<Int> = _stepFlow.asStateFlow()
 
     inner class LocalBinder : Binder() {
         fun getService(): StepCounterService = this@StepCounterService
@@ -69,7 +69,7 @@ class StepCounterService : Service(), SensorEventListener {
             currentSteps = totalSteps - initialSteps
             Log.d(TAG, "Current steps: $currentSteps")
             
-            _stepFlow.tryEmit(currentSteps)
+            _stepFlow.value = currentSteps
         }
     }
 
@@ -85,5 +85,11 @@ class StepCounterService : Service(), SensorEventListener {
         super.onDestroy()
         sensorManager.unregisterListener(this)
         Log.d(TAG, "Service destroyed, listener unregistered")
+    }
+
+    fun resetStepCounter() {
+        initialSteps = -1
+        currentSteps = 0
+        _stepFlow.value = 0
     }
 } 

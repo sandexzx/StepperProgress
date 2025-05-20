@@ -29,6 +29,11 @@ class WorkoutViewModel(application: Application) : AndroidViewModel(application)
     private var lastStepTime: Long = 0
     private var accumulatedFractionalCalories: Double = 0.0
     private var lastStepCount: Int = 0
+    private var stepCounterService: StepCounterService? = null
+
+    fun setStepCounterService(service: StepCounterService?) {
+        stepCounterService = service
+    }
 
     fun startCalibration() {
         Log.d(TAG, "Starting calibration")
@@ -84,6 +89,7 @@ class WorkoutViewModel(application: Application) : AndroidViewModel(application)
         Log.d(TAG, "Stopping step counter service")
         val intent = Intent(getApplication(), StepCounterService::class.java)
         getApplication<Application>().stopService(intent)
+        stepCounterService?.resetStepCounter()
     }
 
     fun updateSteps(newStepCount: Int) {
@@ -123,6 +129,12 @@ class WorkoutViewModel(application: Application) : AndroidViewModel(application)
         val newPausedState = !_workoutSession.value.isPaused
         Log.d(TAG, "Toggling pause state to: $newPausedState")
         _workoutSession.update { it.copy(isPaused = newPausedState) }
+    }
+
+    fun endWorkout() {
+        Log.d(TAG, "Ending workout")
+        resetWorkoutSession()
+        stopStepCounter()
     }
 
     fun getEstimatedTimeToGoal(): Duration {
