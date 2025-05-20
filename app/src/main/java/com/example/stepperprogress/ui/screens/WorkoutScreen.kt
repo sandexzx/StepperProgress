@@ -16,6 +16,7 @@ import java.time.temporal.ChronoUnit
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.windowInsetsPadding
+import kotlin.math.abs
 
 @Composable
 fun WorkoutScreen(
@@ -55,7 +56,14 @@ fun WorkoutScreen(
         )
 
         Text(
-            text = "%.3f%%".format(workoutSession.progressPercentage).trimEnd('0').trimEnd('.'),
+            text = if (Math.abs(workoutSession.progressPercentage - Math.round(workoutSession.progressPercentage)) < 0.0001) {
+                "%.0f%%".format(workoutSession.progressPercentage)
+            } else {
+                "%.3f%%".format(workoutSession.progressPercentage)
+                    .trimEnd('0')
+                    .trimEnd('.')
+                    .let { if (it.endsWith("%")) it else "$it%" }
+            },
             style = MaterialTheme.typography.headlineMedium,
             modifier = Modifier.padding(bottom = 8.dp)
         )
@@ -72,10 +80,10 @@ fun WorkoutScreen(
             ) {
                 StatRow(
                     "Сожжено калорий", 
-                    "%.3f / %.3f".format(workoutSession.currentCalories, workoutSession.targetCalories)
-                        .split(" / ")
+                    "%.1f/%.1f".format(workoutSession.currentCalories, workoutSession.targetCalories)
+                        .split("/")
                         .map { it.trimEnd('0').trimEnd('.') }
-                        .joinToString(" / ")
+                        .joinToString("/")
                 )
                 StatRow("Шагов", workoutSession.steps.toString())
                 StatRow("Время тренировки", formatDuration(viewModel.getWorkoutDuration()))
