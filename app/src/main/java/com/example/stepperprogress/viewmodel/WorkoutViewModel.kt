@@ -46,8 +46,8 @@ class WorkoutViewModel : ViewModel() {
         resetWorkoutSession()
         _workoutSession.update {
             it.copy(
-                targetCalories = targetCalories,
-                currentCalories = 0,
+                targetCalories = targetCalories.toDouble(),
+                currentCalories = 0.0,
                 steps = 0,
                 startTime = System.currentTimeMillis(),
                 isPaused = false,
@@ -67,13 +67,9 @@ class WorkoutViewModel : ViewModel() {
                 session.copy(steps = session.steps + 1)
             } else {
                 val caloriesPerStep = _calibrationData.value.caloriesPerStep
-                accumulatedFractionalCalories += caloriesPerStep
-                val wholeCalories = accumulatedFractionalCalories.toInt()
-                accumulatedFractionalCalories -= wholeCalories
-                
                 session.copy(
                     steps = session.steps + 1,
-                    currentCalories = session.currentCalories + wholeCalories
+                    currentCalories = session.currentCalories + caloriesPerStep
                 )
             }
         }

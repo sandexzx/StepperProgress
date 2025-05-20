@@ -43,7 +43,7 @@ fun WorkoutScreen(
 
         // Progress Section
         LinearProgressIndicator(
-            progress = workoutSession.progressPercentage / 100f,
+            progress = (workoutSession.progressPercentage / 100f).toFloat(),
             modifier = Modifier
                 .fillMaxWidth()
                 .height(8.dp)
@@ -51,7 +51,7 @@ fun WorkoutScreen(
         )
 
         Text(
-            text = "${workoutSession.progressPercentage.toInt()}%",
+            text = "%.3f%%".format(workoutSession.progressPercentage).trimEnd('0').trimEnd('.'),
             style = MaterialTheme.typography.headlineMedium,
             modifier = Modifier.padding(bottom = 8.dp)
         )
@@ -66,7 +66,13 @@ fun WorkoutScreen(
                 modifier = Modifier.padding(16.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                StatRow("Сожжено калорий", "${workoutSession.currentCalories} / ${workoutSession.targetCalories}")
+                StatRow(
+                    "Сожжено калорий", 
+                    "%.3f / %.3f".format(workoutSession.currentCalories, workoutSession.targetCalories)
+                        .split(" / ")
+                        .map { it.trimEnd('0').trimEnd('.') }
+                        .joinToString(" / ")
+                )
                 StatRow("Шагов", workoutSession.steps.toString())
                 StatRow("Время тренировки", formatDuration(viewModel.getWorkoutDuration()))
                 if (!workoutSession.isGoalAchieved) {

@@ -10,19 +10,19 @@ data class CalibrationData(
 )
 
 data class WorkoutSession(
-    val targetCalories: Int = 0,
-    val currentCalories: Int = 0,
+    val targetCalories: Double = 0.0,
+    val currentCalories: Double = 0.0,
     val steps: Int = 0,
     val startTime: Long = 0,
     val isPaused: Boolean = false,
     val isCalibrationMode: Boolean = false
 ) {
-    val progressPercentage: Float
+    val progressPercentage: Double
         get() = if (targetCalories > 0) {
-            (currentCalories.toFloat() / targetCalories.toFloat()) * 100
-        } else 0f
+            (currentCalories / targetCalories) * 100
+        } else 0.0
 
-    val remainingCalories: Int
+    val remainingCalories: Double
         get() = targetCalories - currentCalories
 
     val isGoalAchieved: Boolean
