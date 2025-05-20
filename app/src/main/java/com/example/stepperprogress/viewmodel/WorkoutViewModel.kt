@@ -18,6 +18,7 @@ class WorkoutViewModel : ViewModel() {
     val workoutSession: StateFlow<WorkoutSession> = _workoutSession.asStateFlow()
 
     private var lastStepTime: Long = 0
+    private var accumulatedFractionalCalories: Double = 0.0
 
     fun startCalibration() {
         resetWorkoutSession()
@@ -66,9 +67,13 @@ class WorkoutViewModel : ViewModel() {
                 session.copy(steps = session.steps + 1)
             } else {
                 val caloriesPerStep = _calibrationData.value.caloriesPerStep
+                accumulatedFractionalCalories += caloriesPerStep
+                val wholeCalories = accumulatedFractionalCalories.toInt()
+                accumulatedFractionalCalories -= wholeCalories
+                
                 session.copy(
                     steps = session.steps + 1,
-                    currentCalories = session.currentCalories + caloriesPerStep.toInt()
+                    currentCalories = session.currentCalories + wholeCalories
                 )
             }
         }
@@ -96,5 +101,6 @@ class WorkoutViewModel : ViewModel() {
 
     private fun resetWorkoutSession() {
         _workoutSession.value = WorkoutSession()
+        accumulatedFractionalCalories = 0.0
     }
 } 

@@ -26,5 +26,5 @@ data class WorkoutSession(
         get() = targetCalories - currentCalories
 
     val isGoalAchieved: Boolean
-        get() = currentCalories >= targetCalories
+        get() = targetCalories > 0 && currentCalories >= targetCalories
 } 
