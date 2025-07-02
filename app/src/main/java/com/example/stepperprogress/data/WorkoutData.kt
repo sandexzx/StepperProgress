@@ -1,6 +1,7 @@
 package com.example.stepperprogress.data
 
 import java.time.Duration
+import java.time.LocalDateTime
 
 data class WorkoutSession(
     val targetCalories: Double = 0.0,
@@ -28,5 +29,7 @@ data class WorkoutRecord(
     val id: String, // Уникальный ID для записи
     val date: Long, // Дата и время завершения тренировки в миллисекундах
     val workoutSession: WorkoutSession,
-    val calibrationData: CalibrationData
+    val calibrationData: CalibrationData,
+    val timestamp: LocalDateTime, // Время начала тренировки
+    val duration: Duration // Продолжительность тренировки
 )

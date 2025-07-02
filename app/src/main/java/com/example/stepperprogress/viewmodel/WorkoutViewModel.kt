@@ -185,6 +185,22 @@ class WorkoutViewModel(application: Application) : AndroidViewModel(application)
         _workoutSession.update { it.copy(isMovingUp = newDirection) }
     }
 
+    fun createWorkoutRecord(): WorkoutRecord? {
+        val currentSession = _workoutSession.value
+        return if (currentSession.steps > 0) {
+            WorkoutRecord(
+                id = UUID.randomUUID().toString(),
+                date = System.currentTimeMillis(),
+                workoutSession = currentSession,
+                calibrationData = _calibrationData.value,
+                timestamp = java.time.LocalDateTime.ofEpochSecond(currentSession.startTime / 1000, 0, java.time.ZoneOffset.UTC),
+                duration = getWorkoutDuration()
+            )
+        } else {
+            null
+        }
+    }
+
     fun endWorkout() {
         Log.d(TAG, "Ending workout")
         cancelAutoPause()
@@ -197,7 +213,9 @@ class WorkoutViewModel(application: Application) : AndroidViewModel(application)
                 id = UUID.randomUUID().toString(),
                 date = System.currentTimeMillis(),
                 workoutSession = currentSession,
-                calibrationData = _calibrationData.value
+                calibrationData = _calibrationData.value,
+                timestamp = java.time.LocalDateTime.ofEpochSecond(currentSession.startTime / 1000, 0, java.time.ZoneOffset.UTC),
+                duration = getWorkoutDuration()
             )
             viewModelScope.launch {
                 workoutHistoryDataStore.saveWorkoutRecord(record)

@@ -216,7 +216,16 @@ fun WorkoutScreen(
 
             // Кнопка "Завершить" - менее акцентная
             OutlinedButton(
-                onClick = { onNavigationEvent(NavigationEvent.NavigateToMainMenu) },
+                onClick = { 
+                    // Создаем WorkoutRecord из текущей сессии
+                    val workoutRecord = viewModel.createWorkoutRecord()
+                    workoutRecord?.let {
+                        onNavigationEvent(NavigationEvent.NavigateToWorkoutSummary(it))
+                    } ?: run {
+                        // Если не удалось создать запись, переходим в главное меню
+                        onNavigationEvent(NavigationEvent.NavigateToMainMenu)
+                    }
+                },
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp),
                 colors = ButtonDefaults.outlinedButtonColors(
