@@ -39,12 +39,21 @@ fun WorkoutScreen(
     onNavigationEvent: (NavigationEvent) -> Unit
 ) {
     var showTargetCaloriesDialog by remember { mutableStateOf(true) }
+    var showGoalAchievedNotification by remember { mutableStateOf(false) }
     val workoutSession by viewModel.workoutSession.collectAsState()
     val calibrationData by viewModel.calibrationData.collectAsState()
 
     LaunchedEffect(Unit) {
         if (calibrationData.caloriesPerStep == 0.0) {
             onNavigationEvent(NavigationEvent.NavigateToCalibration)
+        }
+    }
+
+    LaunchedEffect(workoutSession.isGoalAchieved) {
+        if (workoutSession.isGoalAchieved && !showGoalAchievedNotification) {
+            showGoalAchievedNotification = true
+            kotlinx.coroutines.delay(3000)
+            showGoalAchievedNotification = false
         }
     }
 
@@ -260,28 +269,48 @@ fun WorkoutScreen(
         )
     }
 
-    // Goal Achieved Dialog (небольшие улучшения текста)
-    if (workoutSession.isGoalAchieved) {
-        AlertDialog(
-            onDismissRequest = { },
-            title = { Text("Поздравляем!") },
-            text = {
-                Text(
-                    "Вы достигли своей цели!\n\n" + // Добавляем пустую строку для лучшего разделения
-                    "Сожжено калорий: ${formatCalories(workoutSession.currentCalories)}\n" + // Используем форматирование калорий
-                    "Выполнено шагов: ${workoutSession.steps}\n\n" +
-                    "Отличная работа!",
-                    textAlign = TextAlign.Center
-                )
-            },
-            confirmButton = {
-                Button(
-                    onClick = { onNavigationEvent(NavigationEvent.NavigateToMainMenu) }
+    // Goal Achieved Notification
+    if (showGoalAchievedNotification) {
+        Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.BottomCenter
+        ) {
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth(0.9f)
+                    .padding(bottom = 120.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.primaryContainer
+                ),
+                elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
+                shape = RoundedCornerShape(16.dp)
+            ) {
+                Column(
+                    modifier = Modifier.padding(16.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    Text("Отлично!") // Более позитивный текст кнопки
+                    Icon(
+                        imageVector = Icons.Rounded.LocalFireDepartment,
+                        contentDescription = "Цель достигнута",
+                        modifier = Modifier.size(48.dp),
+                        tint = MaterialTheme.colorScheme.primary
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = "🎉 Поздравляем!",
+                        style = MaterialTheme.typography.headlineSmall,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                    Text(
+                        text = "Вы достигли своей цели!",
+                        style = MaterialTheme.typography.bodyLarge,
+                        textAlign = TextAlign.Center,
+                        color = MaterialTheme.colorScheme.onPrimaryContainer
+                    )
                 }
             }
-        )
+        }
     }
 }
 
