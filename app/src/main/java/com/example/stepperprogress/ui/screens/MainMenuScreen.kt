@@ -93,10 +93,17 @@ fun MainMenuScreen(
             )
 
             MenuButton(
+                text = "История тренировок",
+                icon = Icons.Default.List, // Используем иконку списка
+                onClick = { onNavigationEvent(NavigationEvent.NavigateToWorkoutHistory) },
+                delay = 300
+            )
+
+            MenuButton(
                 text = "Настройки",
                 icon = Icons.Default.Settings,
                 onClick = { onNavigationEvent(NavigationEvent.NavigateToSettings) },
-                delay = 300
+                delay = 400
             )
 
             Spacer(modifier = Modifier.weight(1f))
@@ -184,4 +191,4 @@ private fun MenuButton(
             }
         }
     }
-} 
+}

@@ -23,6 +23,7 @@ import com.example.stepperprogress.ui.navigation.Screen
 import com.example.stepperprogress.ui.screens.CalibrationScreen
 import com.example.stepperprogress.ui.screens.MainMenuScreen
 import com.example.stepperprogress.ui.screens.SettingsScreen
+import com.example.stepperprogress.ui.screens.WorkoutHistoryScreen
 import com.example.stepperprogress.ui.screens.WorkoutScreen
 import com.example.stepperprogress.viewmodel.SettingsViewModel
 import com.example.stepperprogress.viewmodel.WorkoutViewModel
@@ -145,6 +146,7 @@ fun AppContent(
             }
             is NavigationEvent.NavigateToWorkout -> currentScreen = Screen.Workout
             is NavigationEvent.NavigateToSettings -> currentScreen = Screen.Settings
+            is NavigationEvent.NavigateToWorkoutHistory -> currentScreen = Screen.WorkoutHistory
             is NavigationEvent.Exit -> {
                 activity.finish()
                 currentScreen = Screen.MainMenu
@@ -164,6 +166,10 @@ fun AppContent(
         )
         Screen.Settings -> SettingsScreen(
             viewModel = settingsViewModel,
+            onNavigationEvent = ::handleNavigation
+        )
+        Screen.WorkoutHistory -> WorkoutHistoryScreen(
+            viewModel = workoutViewModel,
             onNavigationEvent = ::handleNavigation
         )
     }

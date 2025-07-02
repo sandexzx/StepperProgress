@@ -8,6 +8,8 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.example.stepperprogress.data.CalibrationData
 import com.example.stepperprogress.data.CalibrationDataStore
+import com.example.stepperprogress.data.WorkoutHistoryDataStore
+import com.example.stepperprogress.data.WorkoutRecord
 import com.example.stepperprogress.data.WorkoutSession
 import com.example.stepperprogress.service.StepCounterService
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -17,16 +19,21 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.delay
 import java.time.Duration
+import java.util.UUID
 
 class WorkoutViewModel(application: Application) : AndroidViewModel(application) {
     private val TAG = "WorkoutViewModel"
     private val calibrationDataStore = CalibrationDataStore(application)
+    private val workoutHistoryDataStore = WorkoutHistoryDataStore(application)
     
     private val _calibrationData = MutableStateFlow(calibrationDataStore.loadCalibrationData())
     val calibrationData: StateFlow<CalibrationData> = _calibrationData.asStateFlow()
 
     private val _workoutSession = MutableStateFlow(WorkoutSession())
     val workoutSession: StateFlow<WorkoutSession> = _workoutSession.asStateFlow()
+
+    private val _workoutHistory = MutableStateFlow<List<WorkoutRecord>>(emptyList())
+    val workoutHistory: StateFlow<List<WorkoutRecord>> = _workoutHistory.asStateFlow()
 
     private var lastStepTime: Long = 0
     private var accumulatedFractionalCalories: Double = 0.0
@@ -213,6 +220,22 @@ class WorkoutViewModel(application: Application) : AndroidViewModel(application)
         Log.d(TAG, "Ending workout")
         cancelAutoPause()
         wasAutoPaused = false
+
+        // Сохраняем завершенную тренировку, если она не была калибровкой и имела шаги
+        val currentSession = _workoutSession.value
+        if (!currentSession.isCalibrationMode && currentSession.steps > 0) {
+            val record = WorkoutRecord(
+                id = UUID.randomUUID().toString(),
+                date = System.currentTimeMillis(),
+                workoutSession = currentSession,
+                calibrationData = _calibrationData.value
+            )
+            viewModelScope.launch {
+                workoutHistoryDataStore.saveWorkoutRecord(record)
+                Log.d(TAG, "Workout record saved: $record")
+            }
+        }
+
         resetWorkoutSession()
         stopStepCounter()
     }
@@ -250,6 +273,13 @@ class WorkoutViewModel(application: Application) : AndroidViewModel(application)
             (currentTime - session.startTime) - session.pausedDuration
         }
         return Duration.ofMillis(activeDurationMillis.coerceAtLeast(0L))
+    }
+
+    fun loadWorkoutHistory() {
+        viewModelScope.launch {
+            _workoutHistory.value = workoutHistoryDataStore.loadWorkoutRecords()
+            Log.d(TAG, "Workout history loaded: ${_workoutHistory.value.size} records")
+        }
     }
 
     private fun resetWorkoutSession() {

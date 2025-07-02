@@ -31,3 +31,10 @@ data class WorkoutSession(
     val isGoalAchieved: Boolean
         get() = targetCalories > 0 && currentCalories >= targetCalories
 }
+
+data class WorkoutRecord(
+    val id: String, // Уникальный ID для записи
+    val date: Long, // Дата и время завершения тренировки в миллисекундах
+    val workoutSession: WorkoutSession,
+    val calibrationData: CalibrationData
+)

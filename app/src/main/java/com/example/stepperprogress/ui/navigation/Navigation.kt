@@ -5,6 +5,7 @@ sealed class Screen(val route: String) {
     object Calibration : Screen("calibration")
     object Workout : Screen("workout")
     object Settings : Screen("settings")
+    object WorkoutHistory : Screen("workout_history")
 }
 
 sealed class NavigationEvent {
@@ -12,5 +13,6 @@ sealed class NavigationEvent {
     object NavigateToCalibration : NavigationEvent()
     object NavigateToWorkout : NavigationEvent()
     object NavigateToSettings : NavigationEvent()
+    object NavigateToWorkoutHistory : NavigationEvent()
     object Exit : NavigationEvent()
-} 
+}
