@@ -10,12 +10,15 @@ import kotlinx.coroutines.launch
 
 class SettingsViewModel(application: Application) : AndroidViewModel(application) {
     private val calibrationDataStore = CalibrationDataStore(application)
-    
+
     private val _caloriesPerSteps = MutableStateFlow(0.0f)
     val caloriesPerSteps: StateFlow<Float> = _caloriesPerSteps
 
     private val _stepsPerCalorie = MutableStateFlow(0.0f)
     val stepsPerCalorie: StateFlow<Float> = _stepsPerCalorie
+
+    private val _dailyCaloriesGoal = MutableStateFlow(300.0) // New state for daily calories goal
+    val dailyCaloriesGoal: StateFlow<Double> = _dailyCaloriesGoal
 
     private val _saveSuccess = MutableStateFlow(false)
     val saveSuccess: StateFlow<Boolean> = _saveSuccess
@@ -33,6 +36,7 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
         } else {
             0.0f
         }
+        _dailyCaloriesGoal.value = calibrationData.dailyCaloriesGoal // Load daily calories goal
     }
 
     fun updateCaloriesPerSteps(calories: Float) {
@@ -57,13 +61,20 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
         }
     }
 
+    fun updateDailyCaloriesGoal(goal: Double) { // New function to update daily calories goal
+        viewModelScope.launch {
+            _dailyCaloriesGoal.value = goal
+        }
+    }
+
     fun saveSettings() {
         viewModelScope.launch {
             try {
                 val calibrationData = calibrationDataStore.loadCalibrationData()
                 calibrationDataStore.saveCalibrationData(
                     calibrationData.copy(
-                        caloriesPerStep = _caloriesPerSteps.value.toDouble()
+                        caloriesPerStep = _caloriesPerSteps.value.toDouble(),
+                        dailyCaloriesGoal = _dailyCaloriesGoal.value // Save daily calories goal
                     )
                 )
                 _saveSuccess.value = true
@@ -75,4 +86,4 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
             }
         }
     }
-} 
+}

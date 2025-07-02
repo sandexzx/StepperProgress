@@ -25,6 +25,7 @@ import com.example.stepperprogress.ui.screens.MainMenuScreen
 import com.example.stepperprogress.ui.screens.SettingsScreen
 import com.example.stepperprogress.ui.screens.WorkoutHistoryScreen
 import com.example.stepperprogress.ui.screens.WorkoutScreen
+import com.example.stepperprogress.viewmodel.MainScreenViewModel
 import com.example.stepperprogress.viewmodel.SettingsViewModel
 import com.example.stepperprogress.viewmodel.WorkoutViewModel
 import kotlinx.coroutines.flow.collectLatest
@@ -32,11 +33,12 @@ import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
     private val TAG = "MainActivity"
-    private val workoutViewModel: WorkoutViewModel by viewModels { 
-        WorkoutViewModel.ViewModelFactory(application) 
+    private val workoutViewModel: WorkoutViewModel by viewModels {
+        WorkoutViewModel.ViewModelFactory(application)
     }
     private val settingsViewModel: SettingsViewModel by viewModels()
-    
+    private val mainScreenViewModel: MainScreenViewModel by viewModels() // New ViewModel for MainScreen
+
     private var stepCounterService: StepCounterService? = null
     private var isServiceBound = false
 
@@ -67,6 +69,7 @@ class MainActivity : ComponentActivity() {
             Log.d(TAG, "Service connected")
             stepCounterService = (service as? StepCounterService.LocalBinder)?.getService()
             workoutViewModel.setStepCounterService(stepCounterService)
+            mainScreenViewModel.setStepCounterService(stepCounterService) // Pass service to MainScreenViewModel
             isServiceBound = true
             collectStepUpdates()
         }
@@ -75,6 +78,7 @@ class MainActivity : ComponentActivity() {
             Log.d(TAG, "Service disconnected")
             stepCounterService = null
             workoutViewModel.setStepCounterService(null)
+            mainScreenViewModel.setStepCounterService(null) // Clear service from MainScreenViewModel
             isServiceBound = false
         }
     }
@@ -83,7 +87,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         requestPermissionLauncher.launch(Manifest.permission.ACTIVITY_RECOGNITION)
         setContent {
-            AppContent(workoutViewModel, settingsViewModel, this)
+            AppContent(workoutViewModel, settingsViewModel, mainScreenViewModel, this) // Pass MainScreenViewModel
         }
     }
 
@@ -109,6 +113,7 @@ class MainActivity : ComponentActivity() {
                 stepCounterService?.stepFlow?.collectLatest { steps ->
                     Log.d(TAG, "Received step update: $steps")
                     workoutViewModel.updateSteps(steps)
+                    // MainScreenViewModel уже подписан на stepFlow через setStepCounterService
                 }
             } catch (e: Exception) {
                 Log.e(TAG, "Error collecting step updates", e)
@@ -130,6 +135,7 @@ class MainActivity : ComponentActivity() {
 fun AppContent(
     workoutViewModel: WorkoutViewModel,
     settingsViewModel: SettingsViewModel,
+    mainScreenViewModel: MainScreenViewModel, // New parameter
     activity: ComponentActivity
 ) {
     var currentScreen by remember { mutableStateOf<Screen>(Screen.MainMenu) }
@@ -138,6 +144,7 @@ fun AppContent(
         when (event) {
             is NavigationEvent.NavigateToMainMenu -> {
                 workoutViewModel.endWorkout()
+                mainScreenViewModel.refreshData() // Refresh all data when returning to main menu
                 currentScreen = Screen.MainMenu
             }
             is NavigationEvent.NavigateToCalibration -> {
@@ -155,7 +162,10 @@ fun AppContent(
     }
 
     when (currentScreen) {
-        Screen.MainMenu -> MainMenuScreen(onNavigationEvent = ::handleNavigation)
+        Screen.MainMenu -> MainMenuScreen(
+            onNavigationEvent = ::handleNavigation,
+            viewModel = mainScreenViewModel // Pass MainScreenViewModel
+        )
         Screen.Calibration -> CalibrationScreen(
             viewModel = workoutViewModel,
             onNavigationEvent = ::handleNavigation

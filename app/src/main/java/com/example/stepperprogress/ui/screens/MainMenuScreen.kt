@@ -16,13 +16,20 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.example.stepperprogress.ui.components.WorkoutProgressBar
 import com.example.stepperprogress.ui.navigation.NavigationEvent
+import com.example.stepperprogress.viewmodel.MainScreenViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MainMenuScreen(
-    onNavigationEvent: (NavigationEvent) -> Unit
+    onNavigationEvent: (NavigationEvent) -> Unit,
+    viewModel: MainScreenViewModel // Add MainScreenViewModel
 ) {
+    val currentCalories by viewModel.currentCalories.collectAsState()
+    val dailyCaloriesGoal by viewModel.dailyCaloriesGoal.collectAsState()
+    val progressPercentage by viewModel.progressPercentage.collectAsState()
+
     val gradientBackground = Brush.verticalGradient(
         colors = listOf(
             MaterialTheme.colorScheme.primaryContainer,
@@ -74,6 +81,51 @@ fun MainMenuScreen(
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onBackground
                     )
+                }
+            }
+
+            // Прогресс дневной цели
+            AnimatedVisibility(
+                visible = visible,
+                enter = fadeIn(animationSpec = tween(delayMillis = 500)) + slideInVertically(
+                    initialOffsetY = { it },
+                    animationSpec = tween(durationMillis = 500, easing = FastOutSlowInEasing)
+                )
+            ) {
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 4.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceVariant
+                    ),
+                    elevation = CardDefaults.cardElevation(
+                        defaultElevation = 2.dp
+                    )
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Text(
+                            text = "Дневная цель",
+                            style = MaterialTheme.typography.titleMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        WorkoutProgressBar(
+                            progress = progressPercentage,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = "${String.format("%.1f", currentCalories)} / ${String.format("%.1f", dailyCaloriesGoal)} ккал (${(progressPercentage * 100).toInt()}%)",
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
                 }
             }
 
