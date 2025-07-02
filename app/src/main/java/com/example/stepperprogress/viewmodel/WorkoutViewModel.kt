@@ -219,13 +219,21 @@ class WorkoutViewModel(application: Application) : AndroidViewModel(application)
 
     fun getEstimatedTimeToGoal(): Duration {
         val session = _workoutSession.value
-        if (session.isPaused || session.targetCalories <= 0) return Duration.ZERO
+        if (session.isPaused || session.targetCalories <= 0 || session.currentCalories <= 0) return Duration.ZERO
 
-        val caloriesPerStep = _calibrationData.value.caloriesPerStep
-        val timePerStep = _calibrationData.value.timePerStep
-        val remainingSteps = (session.remainingCalories / caloriesPerStep).toLong()
+        val baseCaloriesPerStep = _calibrationData.value.caloriesPerStep
+        val currentCaloriesPerStep = if (session.isMovingUp) {
+            baseCaloriesPerStep
+        } else {
+            baseCaloriesPerStep * 0.35 // 35% от базового значения при движении вниз
+        }
+        
+        // Рассчитываем время на основе текущего темпа тренировки
+        val workoutDuration = getWorkoutDuration()
+        val currentCaloriesPerSecond = session.currentCalories / workoutDuration.seconds.coerceAtLeast(1)
+        val remainingSeconds = (session.remainingCalories / currentCaloriesPerSecond).toLong()
 
-        return timePerStep.multipliedBy(remainingSteps)
+        return Duration.ofSeconds(remainingSeconds)
     }
 
     fun getWorkoutDuration(): Duration {
