@@ -14,6 +14,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.delay
 import java.time.Duration
 
 class WorkoutViewModel(application: Application) : AndroidViewModel(application) {
@@ -30,6 +32,11 @@ class WorkoutViewModel(application: Application) : AndroidViewModel(application)
     private var accumulatedFractionalCalories: Double = 0.0
     private var lastStepCount: Int = 0
     private var stepCounterService: StepCounterService? = null
+    
+    // Автоматическая пауза
+    private val AUTO_PAUSE_DELAY = 2000L // 3 секунды без шагов
+    private var autoPauseJob: kotlinx.coroutines.Job? = null
+    private var wasAutoPaused = false
 
     fun setStepCounterService(service: StepCounterService?) {
         stepCounterService = service
@@ -38,7 +45,7 @@ class WorkoutViewModel(application: Application) : AndroidViewModel(application)
     fun startCalibration() {
         Log.d(TAG, "Starting calibration")
         resetWorkoutSession()
-        _workoutSession.update { it.copy(isCalibrationMode = true, startTime = System.currentTimeMillis()) }
+        _workoutSession.update { it.copy(isCalibrationMode = true, startTime = System.currentTimeMillis(), pausedDuration = 0L, pauseStartTime = 0L) }
         lastStepTime = System.currentTimeMillis()
         startStepCounter()
     }
@@ -72,6 +79,8 @@ class WorkoutViewModel(application: Application) : AndroidViewModel(application)
                 steps = 0,
                 startTime = System.currentTimeMillis(),
                 isPaused = false,
+                pauseStartTime = 0L,
+                pausedDuration = 0L,
                 isCalibrationMode = false
             )
         }
@@ -108,6 +117,17 @@ class WorkoutViewModel(application: Application) : AndroidViewModel(application)
         val currentTime = System.currentTimeMillis()
         val timePerStep = currentTime - lastStepTime
         lastStepTime = currentTime
+        
+        // Отменяем автопаузу при новом шаге
+        cancelAutoPause()
+        
+        // Если была автопауза, снимаем её
+        if (wasAutoPaused && _workoutSession.value.isPaused) {
+            resumeFromAutoPause()
+        }
+        
+        // Планируем автопаузу через заданное время
+        scheduleAutoPause()
 
         _workoutSession.update { session ->
             if (session.isCalibrationMode) {
@@ -129,11 +149,58 @@ class WorkoutViewModel(application: Application) : AndroidViewModel(application)
             }
         }
     }
+    
+    private fun scheduleAutoPause() {
+        autoPauseJob = viewModelScope.launch {
+            delay(AUTO_PAUSE_DELAY)
+            if (!_workoutSession.value.isPaused && !_workoutSession.value.isCalibrationMode) {
+                Log.d(TAG, "Auto-pausing workout due to inactivity")
+                wasAutoPaused = true
+                _workoutSession.update { currentSession ->
+                    currentSession.copy(isPaused = true, pauseStartTime = System.currentTimeMillis())
+                }
+            }
+        }
+    }
+    
+    private fun cancelAutoPause() {
+        autoPauseJob?.cancel()
+        autoPauseJob = null
+    }
+    
+    private fun resumeFromAutoPause() {
+        Log.d(TAG, "Resuming from auto-pause")
+        val currentSession = _workoutSession.value
+        val pauseDuration = System.currentTimeMillis() - currentSession.pauseStartTime
+        _workoutSession.update {
+            it.copy(
+                isPaused = false,
+                pausedDuration = it.pausedDuration + pauseDuration,
+                pauseStartTime = 0
+            )
+        }
+        wasAutoPaused = false
+    }
 
     fun togglePause() {
-        val newPausedState = !_workoutSession.value.isPaused
-        Log.d(TAG, "Toggling pause state to: $newPausedState")
-        _workoutSession.update { it.copy(isPaused = newPausedState) }
+        _workoutSession.update { currentSession ->
+            val newPausedState = !currentSession.isPaused
+            Log.d(TAG, "Toggling pause state to: $newPausedState")
+
+            if (newPausedState) { // Переходим в состояние паузы
+                cancelAutoPause() // Отменяем автопаузу при ручной паузе
+                wasAutoPaused = false
+                currentSession.copy(isPaused = true, pauseStartTime = System.currentTimeMillis())
+            } else { // Выходим из состояния паузы
+                val pauseDuration = System.currentTimeMillis() - currentSession.pauseStartTime
+                scheduleAutoPause() // Планируем автопаузу при возобновлении
+                currentSession.copy(
+                    isPaused = false,
+                    pausedDuration = currentSession.pausedDuration + pauseDuration,
+                    pauseStartTime = 0 // Сбрасываем время начала паузы
+                )
+            }
+        }
     }
 
     fun toggleDirection() {
@@ -144,6 +211,8 @@ class WorkoutViewModel(application: Application) : AndroidViewModel(application)
 
     fun endWorkout() {
         Log.d(TAG, "Ending workout")
+        cancelAutoPause()
+        wasAutoPaused = false
         resetWorkoutSession()
         stopStepCounter()
     }
@@ -161,14 +230,29 @@ class WorkoutViewModel(application: Application) : AndroidViewModel(application)
 
     fun getWorkoutDuration(): Duration {
         val session = _workoutSession.value
-        return Duration.ofMillis(System.currentTimeMillis() - session.startTime)
+        val currentTime = System.currentTimeMillis()
+
+        val activeDurationMillis = if (session.isPaused) {
+            // Если на паузе, то текущая длительность - это время до паузы
+            // минус накопленная длительность паузы
+            (session.pauseStartTime - session.startTime) - session.pausedDuration
+        } else {
+            // Если не на паузе, то текущая длительность - это общее время
+            // минус накопленная длительность паузы
+            (currentTime - session.startTime) - session.pausedDuration
+        }
+        return Duration.ofMillis(activeDurationMillis.coerceAtLeast(0L))
     }
 
     private fun resetWorkoutSession() {
         Log.d(TAG, "Resetting workout session")
+        cancelAutoPause()
+        wasAutoPaused = false
         _workoutSession.value = WorkoutSession()
         accumulatedFractionalCalories = 0.0
         lastStepCount = 0
+        // Убедимся, что эти поля тоже сбрасываются
+        _workoutSession.update { it.copy(pausedDuration = 0L, pauseStartTime = 0L) }
     }
 
     override fun onCleared() {
@@ -186,4 +270,4 @@ class WorkoutViewModel(application: Application) : AndroidViewModel(application)
             throw IllegalArgumentException("Unknown ViewModel class")
         }
     }
-} 
+}

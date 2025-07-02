@@ -170,27 +170,6 @@ fun WorkoutScreen(
                 .fillMaxWidth(),
             verticalArrangement = Arrangement.spacedBy(12.dp) // Увеличиваем отступы между кнопками
         ) {
-            // Основная кнопка действия - "Шаг"
-
-            Button(
-                onClick = { viewModel.recordStep() },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(64.dp), // Делаем кнопку крупнее
-                enabled = !workoutSession.isPaused,
-                shape = RoundedCornerShape(16.dp), // Более скругленные углы                
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.primary, // Основной цвет
-                    contentColor = MaterialTheme.colorScheme.onPrimary
-                )
-            ) {
-                Text(
-                    "ШАГ", // Текст капсом для акцента
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold
-                )
-            }
-
             // Вспомогательные кнопки в строке
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 Button(
@@ -359,4 +338,4 @@ private fun formatCalories(calories: Double): String {
     } else {
         String.format(java.util.Locale.US, "%.1f", calories).trimEnd('0').trimEnd('.')
     }
-} 
+}

@@ -15,6 +15,8 @@ data class WorkoutSession(
     val steps: Int = 0,
     val startTime: Long = 0,
     val isPaused: Boolean = false,
+    val pauseStartTime: Long = 0, // Время начала паузы
+    val pausedDuration: Long = 0, // Общая продолжительность паузы
     val isCalibrationMode: Boolean = false,
     val isMovingUp: Boolean = true
 ) {
@@ -28,4 +30,4 @@ data class WorkoutSession(
 
     val isGoalAchieved: Boolean
         get() = targetCalories > 0 && currentCalories >= targetCalories
-} 
+}
