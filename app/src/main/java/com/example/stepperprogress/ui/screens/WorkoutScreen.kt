@@ -43,11 +43,6 @@ fun WorkoutScreen(
     val workoutSession by viewModel.workoutSession.collectAsState()
     val calibrationData by viewModel.calibrationData.collectAsState()
 
-    LaunchedEffect(Unit) {
-        if (calibrationData.caloriesPerStep == 0.0) {
-            onNavigationEvent(NavigationEvent.NavigateToCalibration)
-        }
-    }
 
     LaunchedEffect(workoutSession.isGoalAchieved) {
         if (workoutSession.isGoalAchieved && !showGoalAchievedNotification) {

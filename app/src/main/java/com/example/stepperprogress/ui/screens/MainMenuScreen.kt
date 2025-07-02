@@ -131,31 +131,24 @@ fun MainMenuScreen(
 
             // Кнопки меню
             MenuButton(
-                text = "Калибровка",
-                icon = Icons.Default.Build,
-                onClick = { onNavigationEvent(NavigationEvent.NavigateToCalibration) },
-                delay = 100
-            )
-
-            MenuButton(
                 text = "Тренировка",
                 icon = Icons.Default.PlayArrow,
                 onClick = { onNavigationEvent(NavigationEvent.NavigateToWorkout) },
-                delay = 200
+                delay = 100
             )
 
             MenuButton(
                 text = "История тренировок",
                 icon = Icons.Default.List, // Используем иконку списка
                 onClick = { onNavigationEvent(NavigationEvent.NavigateToWorkoutHistory) },
-                delay = 300
+                delay = 200
             )
 
             MenuButton(
                 text = "Настройки",
                 icon = Icons.Default.Settings,
                 onClick = { onNavigationEvent(NavigationEvent.NavigateToSettings) },
-                delay = 400
+                delay = 300
             )
 
             Spacer(modifier = Modifier.weight(1f))

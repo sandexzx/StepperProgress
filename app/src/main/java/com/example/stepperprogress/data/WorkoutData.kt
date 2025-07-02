@@ -10,7 +10,6 @@ data class WorkoutSession(
     val isPaused: Boolean = false,
     val pauseStartTime: Long = 0, // Время начала паузы
     val pausedDuration: Long = 0, // Общая продолжительность паузы
-    val isCalibrationMode: Boolean = false,
     val isMovingUp: Boolean = true
 ) {
     val progressPercentage: Double

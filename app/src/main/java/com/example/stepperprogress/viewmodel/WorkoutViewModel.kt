@@ -49,32 +49,7 @@ class WorkoutViewModel(application: Application) : AndroidViewModel(application)
         stepCounterService = service
     }
 
-    fun startCalibration() {
-        Log.d(TAG, "Starting calibration")
-        resetWorkoutSession()
-        _workoutSession.update { it.copy(isCalibrationMode = true, startTime = System.currentTimeMillis(), pausedDuration = 0L, pauseStartTime = 0L) }
-        lastStepTime = System.currentTimeMillis()
-        startStepCounter()
-    }
 
-    fun endCalibration(totalCalories: Int) {
-        Log.d(TAG, "Ending calibration with $totalCalories calories")
-        val session = _workoutSession.value
-        val steps = session.steps
-        val duration = Duration.ofMillis(System.currentTimeMillis() - session.startTime)
-        
-        val newCalibrationData = CalibrationData(
-            steps = steps,
-            calories = totalCalories,
-            caloriesPerStep = totalCalories.toDouble() / steps,
-            timePerStep = duration.dividedBy(steps.toLong())
-        )
-        
-        _calibrationData.update { newCalibrationData }
-        calibrationDataStore.saveCalibrationData(newCalibrationData)
-        resetWorkoutSession()
-        stopStepCounter()
-    }
 
     fun startWorkout(targetCalories: Int) {
         Log.d(TAG, "Starting workout with target $targetCalories calories")
@@ -87,8 +62,7 @@ class WorkoutViewModel(application: Application) : AndroidViewModel(application)
                 startTime = System.currentTimeMillis(),
                 isPaused = false,
                 pauseStartTime = 0L,
-                pausedDuration = 0L,
-                isCalibrationMode = false
+                pausedDuration = 0L
             )
         }
         lastStepTime = System.currentTimeMillis()
@@ -137,30 +111,25 @@ class WorkoutViewModel(application: Application) : AndroidViewModel(application)
         scheduleAutoPause()
 
         _workoutSession.update { session ->
-            if (session.isCalibrationMode) {
-                Log.d(TAG, "Recording step in calibration mode")
-                session.copy(steps = session.steps + 1)
+            val baseCaloriesPerStep = _calibrationData.value.caloriesPerStep
+            val caloriesPerStep = if (session.isMovingUp) {
+                baseCaloriesPerStep
             } else {
-                val baseCaloriesPerStep = _calibrationData.value.caloriesPerStep
-                val caloriesPerStep = if (session.isMovingUp) {
-                    baseCaloriesPerStep
-                } else {
-                    baseCaloriesPerStep * 0.35 // 35% от базового значения при движении вниз
-                }
-                val newCalories = session.currentCalories + caloriesPerStep
-                Log.d(TAG, "Recording step in workout mode: calories=$newCalories, direction=${if (session.isMovingUp) "up" else "down"}")
-                session.copy(
-                    steps = session.steps + 1,
-                    currentCalories = newCalories
-                )
+                baseCaloriesPerStep * 0.35 // 35% от базового значения при движении вниз
             }
+            val newCalories = session.currentCalories + caloriesPerStep
+            Log.d(TAG, "Recording step in workout mode: calories=$newCalories, direction=${if (session.isMovingUp) "up" else "down"}")
+            session.copy(
+                steps = session.steps + 1,
+                currentCalories = newCalories
+            )
         }
     }
     
     private fun scheduleAutoPause() {
         autoPauseJob = viewModelScope.launch {
             delay(AUTO_PAUSE_DELAY)
-            if (!_workoutSession.value.isPaused && !_workoutSession.value.isCalibrationMode) {
+            if (!_workoutSession.value.isPaused) {
                 Log.d(TAG, "Auto-pausing workout due to inactivity")
                 wasAutoPaused = true
                 _workoutSession.update { currentSession ->
@@ -221,9 +190,9 @@ class WorkoutViewModel(application: Application) : AndroidViewModel(application)
         cancelAutoPause()
         wasAutoPaused = false
 
-        // Сохраняем завершенную тренировку, если она не была калибровкой и имела шаги
+        // Сохраняем завершенную тренировку, если она имела шаги
         val currentSession = _workoutSession.value
-        if (!currentSession.isCalibrationMode && currentSession.steps > 0) {
+        if (currentSession.steps > 0) {
             val record = WorkoutRecord(
                 id = UUID.randomUUID().toString(),
                 date = System.currentTimeMillis(),

@@ -20,7 +20,6 @@ import androidx.lifecycle.lifecycleScope
 import com.example.stepperprogress.service.StepCounterService
 import com.example.stepperprogress.ui.navigation.NavigationEvent
 import com.example.stepperprogress.ui.navigation.Screen
-import com.example.stepperprogress.ui.screens.CalibrationScreen
 import com.example.stepperprogress.ui.screens.MainMenuScreen
 import com.example.stepperprogress.ui.screens.SettingsScreen
 import com.example.stepperprogress.ui.screens.WorkoutHistoryScreen
@@ -147,10 +146,6 @@ fun AppContent(
                 mainScreenViewModel.refreshData() // Refresh all data when returning to main menu
                 currentScreen = Screen.MainMenu
             }
-            is NavigationEvent.NavigateToCalibration -> {
-                workoutViewModel.startCalibration()
-                currentScreen = Screen.Calibration
-            }
             is NavigationEvent.NavigateToWorkout -> currentScreen = Screen.Workout
             is NavigationEvent.NavigateToSettings -> currentScreen = Screen.Settings
             is NavigationEvent.NavigateToWorkoutHistory -> currentScreen = Screen.WorkoutHistory
@@ -165,10 +160,6 @@ fun AppContent(
         Screen.MainMenu -> MainMenuScreen(
             onNavigationEvent = ::handleNavigation,
             viewModel = mainScreenViewModel // Pass MainScreenViewModel
-        )
-        Screen.Calibration -> CalibrationScreen(
-            viewModel = workoutViewModel,
-            onNavigationEvent = ::handleNavigation
         )
         Screen.Workout -> WorkoutScreen(
             viewModel = workoutViewModel,
